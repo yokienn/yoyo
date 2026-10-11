@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#090c27">
+<title>Isidora vs Noam: Duelo de amigos</title>
+<style>
+:root{--pink:#ff4ebd;--blue:#46c9ff;--ink:#080b20}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b20;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+body{display:flex;align-items:center;justify-content:center}
+#app{position:relative;width:100%;height:100%;max-width:1200px;max-height:900px;background:#111;overflow:hidden;isolation:isolate}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:clamp(12px,3vw,32px);background:linear-gradient(135deg,rgba(7,9,29,.88),rgba(25,9,47,.75));z-index:5}
+.panel{width:min(760px,100%);max-height:100%;overflow:auto;border:2px solid #ff69cf;border-radius:22px;padding:clamp(16px,4vw,30px);background:linear-gradient(145deg,rgba(19,17,49,.97),rgba(8,15,39,.97));box-shadow:0 0 30px #e42dbb55,inset 0 0 25px #398dff18;text-align:center}
+h1{margin:0;color:#ff73d3;font-size:clamp(24px,5vw,48px);line-height:1.05;text-shadow:3px 3px #70235f}
+.subtitle{color:#b8dfff;margin:8px 0 20px;font-weight:700}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pick{border:2px solid var(--pink);border-radius:16px;padding:12px;background:#211632;color:white;cursor:pointer;min-width:0}
+.pick.blue{border-color:var(--blue);background:#10253d}
+.pick.selected{box-shadow:0 0 0 3px white,0 0 22px currentColor;transform:translateY(-2px)}
+.portrait{height:120px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(#fa77bd44,#162c4b);font-size:64px}
+.pick strong{display:block;font-size:clamp(15px,3vw,21px);margin-top:7px}
+.pick small{display:block;color:#d4d9ef;margin-top:3px}
+.action{border:0;border-radius:12px;padding:13px 24px;margin-top:18px;background:linear-gradient(90deg,#ff39ad,#a84bff);color:#fff;font-size:18px;font-weight:900;box-shadow:0 5px 0 #69215e;cursor:pointer}
+.hint{font-size:12px;color:#b8c5e6;margin-top:13px}
+#hud{position:absolute;top:env(safe-area-inset-top,0);left:0;right:0;display:none;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px clamp(8px,2vw,22px);pointer-events:none;text-shadow:1px 2px #080b20;z-index:2}
+.hudside{width:39%;min-width:0}.hudside.right{text-align:right}.name{font-weight:1000;font-size:clamp(12px,2.4vw,22px);line-height:1.1}.pink{color:var(--pink)}.cyan{color:var(--blue)}
+.bar{height:13px;background:#151a35;border:2px solid #fff;border-radius:10px;overflow:hidden;margin-top:5px}.fill{height:100%;width:100%;transition:width .12s}.fill.pink{background:linear-gradient(90deg,#ff278b,#ffb0ed)}.fill.cyan{background:linear-gradient(90deg,#18aaff,#a6f6ff)}
+.timer{font-size:clamp(20px,4vw,34px);font-weight:1000;color:#ffd35e;line-height:1;min-width:50px;text-align:center}.timer small{display:block;font-size:9px;color:white}
+#tag{position:absolute;top:70px;left:50%;transform:translateX(-50%);font-weight:1000;font-size:clamp(14px,3vw,22px);color:#fff;text-shadow:0 0 12px #ff4ebd;z-index:2;pointer-events:none}
+#controls{position:absolute;left:0;right:0;bottom:env(safe-area-inset-bottom,0);display:none;justify-content:space-between;align-items:flex-end;padding:8px clamp(8px,2vw,24px) 10px;gap:12px;z-index:3;pointer-events:none}
+.group{display:flex;gap:clamp(5px,1.5vw,14px);pointer-events:auto;align-items:flex-end}
+.ctrl{width:clamp(48px,10vw,74px);height:clamp(48px,10vw,74px);border-radius:50%;border:2px solid #ff68d0;color:#ffd5f3;background:#200f37dd;box-shadow:0 0 13px #ff4ebd55,inset 0 0 10px #ff4ebd30;font-size:clamp(22px,5vw,34px);font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none}
+.ctrl.blue{border-color:var(--blue);color:#b8f0ff;background:#081d34dd;box-shadow:0 0 13px #46c9ff55}
+.ctrl.attack{border-radius:18px;width:clamp(68px,16vw,115px);font-size:clamp(11px,2.3vw,15px);line-height:1.1;text-align:center;padding:5px}
+.ctrl:active,.ctrl.down{filter:brightness(1.6);transform:scale(.96)}
+#utility{position:absolute;top:calc(env(safe-area-inset-top,0px) + 64px);right:8px;z-index:4;display:none;gap:5px}
+.util{font-size:11px;font-weight:800;color:white;background:#101a35dd;border:1px solid #9eb8ee;border-radius:8px;padding:7px}
+#result{display:none}
+@media (orientation:portrait){#app{max-height:none}#controls{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 7px)}.portrait{height:90px}#tag{top:72px}}
+@media (max-height:480px){.ctrl{width:46px;height:46px}.ctrl.attack{width:80px}.bar{height:10px}#controls{padding-bottom:3px}.panel{padding:12px}.portrait{height:70px}}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="game" aria-label="Juego de lucha arcade"></canvas>
+<div id="hud">
+ <div class="hudside"><div class="name pink">ISIDORA <span id="player1label">· JUGADOR</span></div><div class="bar"><div id="hp1" class="fill pink"></div></div></div>
+ <div class="timer"><span id="clock">60</span><small>TIEMPO</small></div>
+ <div class="hudside right"><div class="name cyan">NOAM <span id="player2label">· CPU</span></div><div class="bar"><div id="hp2" class="fill cyan"></div></div></div>
+</div>
+<div id="tag"></div>
+<div id="utility"><button class="util" id="restart">↻ Reiniciar</button><button class="util" id="back">⌂ Menú</button><button class="util" id="fullscreen">⛶ Pantalla completa</button></div>
+<div id="controls">
+ <div class="group"><button class="ctrl" data-key="left" aria-label="Mover a la izquierda">←</button><button class="ctrl" data-key="right" aria-label="Mover a la derecha">→</button></div>
+ <div class="group"><button class="ctrl" data-key="jump" aria-label="Saltar">↑</button><button class="ctrl attack" id="attack">💋<br>LANZAR BESOS</button></div>
+</div>
+<div class="overlay" id="menu"><div class="panel">
+ <h1>ISIDORA VS NOAM</h1><div class="subtitle">DUELO DE AMIGOS · ARCADE 2D</div>
+ <p>Elige a tu luchador. La otra persona será controlada por la CPU.</p>
+ <div class="cards">
+  <button class="pick selected" data-choice="isidora"><div class="portrait">💋</div><strong class="pink">ISIDORA</strong><small>La reina de los besos</small></button>
+  <button class="pick blue" data-choice="noam"><div class="portrait">🐕</div><strong class="cyan">NOAM</strong><small>El lanzachihuahuas</small></button>
+ </div>
+ <button class="action" id="start">¡A PELEAR!</button>
+ <div class="hint">Móvil: mantén pulsadas las flechas para moverte y toca saltar o atacar.<br>Teclado: A/D o ←/→ · W/↑ para saltar · Espacio para atacar.</div>
+</div></div>
+<div class="overlay" id="result"><div class="panel"><h1 id="winner">¡ISIDORA GANA! 💋</h1><p id="resultText">¡Gran combate!</p><button class="action" id="again">Revancha</button><button class="action" id="resultMenu" style="background:linear-gradient(90deg,#168bdb,#4c5dff)">Elegir personaje</button></div></div>
+</div>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let W=900,H=500,dpr=1,mode='menu',choice='isidora',last=0,elapsed=0,timeLeft=60,shake=0;
+let fighters=[],projectiles=[],particles=[],keys={left:false,right:false,jump:false},held=new Set();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function resize(){const r=$('app').getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener('resize',resize);resize();
+function fighter(id,x){return {id,x,y:0,vx:0,vy:0,hp:100,face:id==='isidora'?1:-1,ground:true,attackCd:0,specialCd:0,anim:0,hit:0,flash:0,aiWait:.5,walk:0};}
+function startGame(){choice=choice||'isidora';fighters=[fighter('isidora',W*.27),fighter('noam',W*.73)];fighters[0].face=1;fighters[1].face=-1;
+if(choice==='noam'){fighters[0].cpu=true;fighters[1].cpu=false}else{fighters[0].cpu=false;fighters[1].cpu=true}
+projectiles=[];particles=[];elapsed=0;timeLeft=60;shake=0;mode='fight';$('menu').style.display='none';$('result').style.display='none';$('hud').style.display='flex';$('controls').style.display='flex';$('utility').style.display='flex';$('player1label').textContent=fighters[0].cpu?'· CPU':'· JUGADOR';$('player2label').textContent=fighters[1].cpu?'· CPU':'· JUGADOR';$('attack').innerHTML=(choice==='isidora'?'💋<br>LANZAR BESOS':'🐕<br>LANZAR CHIHUAHUAS');$('attack').className='ctrl attack '+(choice==='noam'?'blue':'');}
+document.querySelectorAll('[data-choice]').forEach(b=>b.addEventListener('click',()=>{choice=b.dataset.choice;document.querySelectorAll('[data-choice]').forEach(x=>x.classList.toggle('selected',x===b))}));
+$('start').onclick=startGame;$('again').onclick=startGame;$('resultMenu').onclick=()=>{mode='menu';$('result').style.display='none';$('menu').style.display='flex';$('hud').style.display='none';$('controls').style.display='none';$('utility').style.display='none'};
+$('back').onclick=$('resultMenu').onclick;$('restart').onclick=startGame;
+$('fullscreen').onclick=async()=>{try{if(!document.fullscreenElement)await $('app').requestFullscreen();else await document.exitFullscreen()}catch(e){$('fullscreen').textContent='Pantalla completa no disponible'}};
+function floorY(){return H*.79}
+function moveInput(){let p=fighters.find(f=>!f.cpu);if(!p||mode!=='fight')return;if(keys.left){p.vx-=.65;p.face=-1}if(keys.right){p.vx+=.65;p.face=1}if(keys.jump&&p.ground){p.vy=-H*.52;p.ground=false;keys.jump=false;burst(p.x,floorY()-10,'#ffffff',5)}}
+function attack(f,special=false){if(mode!=='fight'||f.attackCd>0)return;f.attackCd=special?1.1:.48;if(special)f.specialCd=4;let count=special?5:1;
+for(let i=0;i<count;i++){let spread=(i-(count-1)/2)*.13;projectiles.push({owner:f.id,x:f.x+f.face*26,y:f.y-55+(special?Math.sin(i*2)*16:0),vx:f.face*(special?W*.62:W*.78),vy:spread*H,life:2,kind:f.id==='isidora'?'kiss':'dog',size:special?1.1:.85,spin:0})}
+burst(f.x+f.face*28,f.y-55,f.id==='isidora'?'#ff5bd4':'#50d7ff',special?16:7)}
+$('attack').addEventListener('pointerdown',e=>{e.preventDefault();if(mode==='fight'){const p=fighters.find(f=>!f.cpu);if(p)attack(p)}});
+document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture?.(e.pointerId);b.classList.add('down');if(k==='jump'){keys.jump=true}else{keys[k]=true}});const off=e=>{e.preventDefault();b.classList.remove('down');if(k!=='jump')keys[k]=false};b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off)});
+addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup',' ','a','d','w'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k==='arrowup'||k==='w')keys.jump=true;if(k===' ') {let p=fighters.find(f=>!f.cpu);if(p)attack(p)}});
+addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false});
+function burst(x,y,color,n){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*W*.45,vy:(Math.random()-.7)*H*.45,life:.35+Math.random()*.4,color,size:2+Math.random()*4})}
+function update(dt){if(mode!=='fight')return;elapsed+=dt;timeLeft=Math.max(0,60-elapsed);moveInput();
+fighters.forEach((f,i)=>{const enemy=fighters[1-i];f.anim+=dt;f.attackCd=Math.max(0,f.attackCd-dt);f.specialCd=Math.max(0,f.specialCd-dt);f.hit=Math.max(0,f.hit-dt);f.flash=Math.max(0,f.flash-dt);f.face=enemy.x>=f.x?1:-1;
+if(f.cpu){let dx=enemy.x-f.x,dist=Math.abs(dx);f.vx+=Math.sign(dx)*dt*(dist>W*.3?W*.55:W*.12);if(dist<W*.58&&f.attackCd<=0&&Math.random()<dt*1.9)attack(f,dist<W*.3&&f.specialCd<=0&&Math.random()<.28);if(f.ground&&Math.random()<dt*.12&&dist<W*.45){f.vy=-H*.43;f.ground=false}}
+f.vx=clamp(f.vx,-W*.62,W*.62);f.x+=f.vx*dt;f.vx*=Math.pow(f.ground?.08:.85,dt);f.vy+=H*1.35*dt;f.y+=f.vy*dt;
+if(f.y>=0){f.y=0;f.vy=0;f.ground=true}f.x=clamp(f.x,45,W-45);f.walk+=Math.abs(f.vx)*dt*.03});
+for(let p of projectiles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;p.spin+=dt*5;let target=fighters.find(f=>f.id!==p.owner);let fy=floorY()-H*.12+f.y-55;if(target&&Math.abs(p.x-target.x)<34&&Math.abs(p.y-fy)<54){target.hp=Math.max(0,target.hp-(p.kind==='kiss'?8:7));target.hit=.2;target.vx+=(p.vx>0?1:-1)*W*.19;target.vy=-H*.13;target.ground=false;shake=7;burst(p.x,p.y,p.kind==='kiss'?'#ff63db':'#63d9ff',15);p.life=0}}
+projectiles=projectiles.filter(p=>p.life>0&&p.x>-40&&p.x<W+40);
+particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=H*.4*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
+$('clock').textContent=Math.ceil(timeLeft);$('hp1').style.width=fighters[0].hp+'%';$('hp2').style.width=fighters[1].hp+'%';
+if(fighters.some(f=>f.hp<=0)||timeLeft<=0)finish();}
+function finish(){if(mode!=='fight')return;mode='result';let a=fighters[0].hp,b=fighters[1].hp;let winner=a===b?'¡EMPATE!':a>b?'¡ISIDORA GANA! 💋':'¡NOAM GANA! 🐕';$('winner').textContent=winner;$('resultText').textContent=timeLeft<=0&&a!==b?'Se acabó el tiempo. ¡Revancha!':'Combate terminado. ¿Una revancha?';$('result').style.display='flex';keys.left=keys.right=keys.jump=false}
+function polygon(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}}
+function background(){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#17143f');g.addColorStop(.45,'#f05b6c');g.addColorStop(.72,'#28315d');g.addColorStop(1,'#12162d');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let i=0;i<70;i++){let x=i*W/60-W*.1;polygon([[x,H*.48],[x+W*.09,H*.25+Math.sin(i*4)*H*.03],[x+W*.17,H*.48]],i%2?'#40366e':'#302b5e')}
+for(let i=0;i<50;i++){let x=(i*97)%W,y=H*.43+(i%7)*H*.018,w= W*.012+(i%4)*W*.006,h=H*(.05+(i%5)*.02);ctx.fillStyle=i%3?'#242847':'#ff9b55';ctx.fillRect(x,y,w,h);for(let wx=x+3;wx<x+w-2;wx+=5)for(let wy=y+4;wy<y+h-3;wy+=6){ctx.fillStyle=(Math.floor(wx+wy)%3)?'#ffb65e':'#55a7d5';ctx.fillRect(wx,wy,2,2)}}
+ctx.fillStyle='#15172b';ctx.fillRect(0,H*.68,W,H*.12);ctx.strokeStyle='#9b7691';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,H*.68);ctx.lineTo(W,H*.68);ctx.stroke();
+let fy=floorY();polygon([[0,fy],[W,fy],[W,H],[0,H]],'#393044');for(let y=fy+8;y<H;y+=H*.075){ctx.strokeStyle='#17172c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}for(let x=-30;x<W+80;x+=W*.13){ctx.strokeStyle='#665064';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,fy);ctx.lineTo(x-W*.08,H);ctx.stroke()}ctx.fillStyle='#ffb85c';for(let i=0;i<30;i++){let x=(i*131)%W,y=fy+((i*47)%(H-fy));ctx.fillRect(x,y,3,2)}}
+function drawFighter(f){let ground=floorY(),x=f.x,y=ground+f.y,dir=f.face,walking=Math.sin(f.anim*11)*Math.min(8,Math.abs(f.vx)*.08),pink=f.id==='isidora',accent=pink?'#ff58c9':'#51d5ff';ctx.save();ctx.translate(x,y);ctx.scale(dir,1);if(f.hit>0)ctx.translate(-4,0);
+ctx.fillStyle='#080a17aa';ctx.beginPath();ctx.ellipse(0,0,30,7,0,0,Math.PI*2);ctx.fill();
+// legs and chunky sneakers
+ctx.strokeStyle='#11111b';ctx.lineWidth=16;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-9,-48);ctx.lineTo(-17+walking,-19);ctx.lineTo(-25+walking,-5);ctx.moveTo(9,-48);ctx.lineTo(20-walking,-22);ctx.lineTo(28-walking,-5);ctx.stroke();
+ctx.strokeStyle='#343342';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-17+walking,-18);ctx.lineTo(-25+walking,-5);ctx.moveTo(20-walking,-22);ctx.lineTo(28-walking,-5);ctx.stroke();
+ctx.fillStyle='#c7c9d7';ctx.beginPath();ctx.ellipse(-25+walking,-4,14,5,0,0,Math.PI*2);ctx.ellipse(28-walking,-4,14,5,0,0,Math.PI*2);ctx.fill();
+// body, jacket, arms
+ctx.fillStyle='#080b16';polygon([[-16,-94],[15,-94],[22,-51],[12,-42],[-14,-43],[-22,-54]],'#10121f','#4a4254');
+ctx.fillStyle=pink?'#e9d8e0':'#151622';polygon([[-7,-90],[8,-90],[5,-61],[-3,-61]],pink?'#eee1e7':'#222633');
+ctx.strokeStyle='#12131f';ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(-14,-85);ctx.lineTo(-25,-63);ctx.lineTo(-18,-48);ctx.moveTo(13,-84);ctx.lineTo(27,-67);ctx.lineTo(34,-76);ctx.stroke();
+ctx.strokeStyle='#555164';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-25,-63);ctx.lineTo(-18,-48);ctx.moveTo(27,-67);ctx.lineTo(34,-76);ctx.stroke();
+// neck and face
+ctx.fillStyle='#c98269';ctx.fillRect(-5,-103,10,12);ctx.fillStyle=pink?'#d9977c':'#bb8069';ctx.beginPath();ctx.ellipse(0,-113,14,18,0,0,Math.PI*2);ctx.fill();
+// hair behind/head
+ctx.fillStyle='#17111d';ctx.beginPath();ctx.moveTo(-13,-126);ctx.quadraticCurveTo(-30,-116,-24,-88);ctx.lineTo(-15,-99);ctx.lineTo(-11,-119);ctx.fill();
+ctx.fillStyle='#17111d';ctx.beginPath();ctx.moveTo(-13,-126);ctx.quadraticCurveTo(2,-140,14,-125);ctx.lineTo(15,-112);ctx.lineTo(8,-121);ctx.lineTo(1,-115);ctx.lineTo(-8,-120);ctx.fill();
+ctx.fillStyle='#17121c';ctx.fillRect(-15,-121,5,22);ctx.fillRect(10,-121,5,23);
+ctx.fillStyle='#211723';ctx.fillRect(5,-116,8,3);ctx.fillStyle='#f8d9cf';ctx.fillRect(4,-116,5,2);ctx.fillStyle='#38202b';ctx.fillRect(-8,-116,5,2);
+ctx.fillStyle='#8e4d50';ctx.fillRect(-3,-105,7,2);
+if(!pink){ctx.strokeStyle='#d7e8f4';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-131,13,Math.PI,Math.PI*2);ctx.stroke();ctx.fillStyle='#0d1523';ctx.fillRect(-12,-134,10,4);ctx.fillRect(2,-134,10,4);ctx.strokeStyle='#c5d9e5';ctx.beginPath();ctx.moveTo(-2,-132);ctx.lineTo(2,-132);ctx.stroke();ctx.fillStyle='#c5cbd6';ctx.fillRect(2,-107,3,3);ctx.fillRect(-5,-108,2,2);ctx.strokeStyle='#b9a6a2';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-92);ctx.lineTo(10,-91);ctx.stroke();ctx.strokeStyle='#d0b779';ctx.beginPath();ctx.moveTo(-6,-82);ctx.lineTo(5,-69);ctx.stroke();ctx.beginPath();ctx.moveTo(-6,-78);ctx.lineTo(7,-65);ctx.stroke()}
+else{ctx.fillStyle='#f3e7e9';ctx.beginPath();ctx.moveTo(-8,-93);ctx.lineTo(0,-74);ctx.lineTo(8,-93);ctx.fill();ctx.fillStyle='#ff5dbf';ctx.fillRect(-2,-84,4,2)}
+if(f.flash>0){ctx.globalAlpha=.35;ctx.fillStyle='#fff';ctx.fillRect(-30,-140,60,140)}
+ctx.restore();}
+// Detailed little dog projectiles
+function drawDog(p){let x=p.x,y=p.y;ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(p.spin)*.12);let s=p.size;ctx.scale(s,s);ctx.fillStyle='#70452f';ctx.beginPath();ctx.ellipse(-2,4,17,9,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#c98d50';ctx.beginPath();ctx.ellipse(2,0,16,8,-.1,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#a9673c';ctx.beginPath();ctx.moveTo(-9,-3);ctx.lineTo(-17,-17);ctx.lineTo(-3,-11);ctx.fill();ctx.beginPath();ctx.moveTo(8,-4);ctx.lineTo(18,-16);ctx.lineTo(16,-2);ctx.fill();ctx.fillStyle='#f0b56f';ctx.beginPath();ctx.ellipse(3,-8,12,11,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#211624';ctx.beginPath();ctx.arc(7,-10,2,0,7);ctx.arc(-1,-10,2,0,7);ctx.fill();ctx.fillStyle='#2c1720';ctx.beginPath();ctx.ellipse(4,-4,3,2,0,0,7);ctx.fill();ctx.strokeStyle='#fff0d3';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-12,10);ctx.lineTo(-14,15);ctx.moveTo(1,10);ctx.lineTo(0,15);ctx.moveTo(12,7);ctx.lineTo(14,12);ctx.stroke();ctx.restore()}
+function drawProjectile(p){if(p.kind==='dog'){drawDog(p);return}ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.sin(p.spin)*.2);ctx.shadowBlur=18;ctx.shadowColor='#ff55d4';ctx.fillStyle='#ff54c9';ctx.beginPath();ctx.moveTo(0,7);ctx.bezierCurveTo(-28,-10,-10,-24,0,-10);ctx.bezierCurveTo(10,-24,28,-10,0,7);ctx.fill();ctx.restore()}
+function render(){ctx.clearRect(0,0,W,H);background();if(mode==='fight'||mode==='result'){if(shake>0){ctx.save();ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.85}
+fighters.forEach(drawFighter);projectiles.forEach(drawProjectile);particles.forEach(p=>{ctx.globalAlpha=clamp(p.life*2,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size)});ctx.globalAlpha=1;if(shake>0)ctx.restore();
+if(mode==='fight'){ctx.fillStyle='#ffffff99';ctx.font=`bold ${Math.max(11,W*.018)}px system-ui`;ctx.textAlign='center';ctx.fillText('A / D MOVER  ·  W SALTAR  ·  ESPACIO ATACAR',W/2,H*.19)}}
+else{ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font=`900 ${Math.min(28,W*.055)}px system-ui`;ctx.fillText('ELIGE TU LUCHADOR',W/2,H*.2);drawFighter({id:'isidora',x:W*.29,y:0,face:1,anim:0,vx:0,hit:0,flash:0});drawFighter({id:'noam',x:W*.71,y:0,face:-1,anim:0,vx:0,hit:0,flash:0})}}
+function loop(t){let dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);render();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
